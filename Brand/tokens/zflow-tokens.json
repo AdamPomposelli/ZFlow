@@ -1,0 +1,21 @@
+{
+  "accent": "#6d28d9",
+  "accent-held": "#5b21b6",
+  "accent-laid": "#ede7fd",
+  "accent-ring": "rgba(109, 40, 217, 0.45)",
+  "ink": "#171717",
+  "ink-secondary": "#6b6a66",
+  "ink-tertiary": "#9b9a95",
+  "ink-inverse": "#ffffff",
+  "surface": "#ffffff",
+  "surface-laid": "#f5f4f1",
+  "surface-laid-hover": "#eeedea",
+  "rule": "rgba(23, 23, 23, 0.09)",
+  "rule-strong": "rgba(23, 23, 23, 0.15)",
+  "positive": "#1f7a5c",
+  "warning": "#b8860b",
+  "danger": "#b3261e",
+  "font-display": "\"Newsreader\", \"Iowan Old Style\", Palatino, Georgia, serif",
+  "font-ui": "\"Inter\", -apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"Segoe UI\", sans-serif",
+  "font-mono": "ui-monospace, \"SF Mono\", Menlo, monospace"
+}

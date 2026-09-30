@@ -1,0 +1,34 @@
+/*
+ * ZFlow brand tokens.
+ *
+ * The one place the palette is written down. The settings front end imports
+ * this rather than restating it, so the charter and the product cannot drift.
+ */
+:root {
+  /* Zippytal's purple, taken as it is. */
+  --zf-accent: #6d28d9;
+  --zf-accent-held: #5b21b6;
+  --zf-accent-laid: #ede7fd;
+  --zf-accent-ring: rgba(109, 40, 217, 0.45);
+
+  --zf-ink: #171717;
+  --zf-ink-secondary: #6b6a66;
+  --zf-ink-tertiary: #9b9a95;
+  --zf-ink-inverse: #ffffff;
+
+  /* Warm, not grey: this is what makes the interface read as paper. */
+  --zf-surface: #ffffff;
+  --zf-surface-laid: #f5f4f1;
+  --zf-surface-laid-hover: #eeedea;
+
+  --zf-rule: rgba(23, 23, 23, 0.09);
+  --zf-rule-strong: rgba(23, 23, 23, 0.15);
+
+  --zf-positive: #1f7a5c;
+  --zf-warning: #b8860b;
+  --zf-danger: #b3261e;
+
+  --zf-font-display: "Newsreader", "Iowan Old Style", Palatino, Georgia, serif;
+  --zf-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --zf-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}

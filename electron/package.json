@@ -1,0 +1,30 @@
+{
+  "name": "zflow-ui",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Electron front end for ZFlow. The Swift app stays the engine; this is the settings and history surface.",
+  "main": "dist-main/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build:renderer": "vite build",
+    "build:main": "esbuild main/index.ts main/preload.ts --bundle --platform=node --format=cjs --outdir=dist-main --external:electron --external:sherpa-onnx-node && cp main/diarize-worker.js dist-main/",
+    "build": "npm run build:renderer && npm run build:main",
+    "start": "npm run build && electron .",
+    "electron": "electron ."
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^41.10.7",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sherpa-onnx-darwin-arm64": "^1.13.8",
+    "sherpa-onnx-node": "^1.13.8"
+  }
+}

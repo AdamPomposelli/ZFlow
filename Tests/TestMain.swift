@@ -1,0 +1,38 @@
+import Foundation
+
+@main
+struct ZFlowTests {
+    static func main() {
+        AppContextServiceTests.run()
+        AppLifecycleTests.run()
+        AudioSegmentationCoreTests.run()
+        AudioUploadEncoderTests.run()
+        MeetingSummaryCoreTests.run()
+        ModelConfigurationTests.run()
+        NotetakerCoreTests.run()
+        PermissionsCoreTests.run()
+        PipelineModeTests.run()
+        ShortcutCoreTests.run()
+        SavingsCoreTests.run()
+        SettingsBridgeTests.run()
+        SpeechAssetGateCoreTests.run()
+        SemanticVersionTests.run()
+        CleanupPromptCoreTests.run()
+        EditSettleTrackerTests.run()
+        FileTranscriptionCoreTests.run()
+        HotkeyRecoveryCoreTests.run()
+        LanguageCatalogTests.run()
+        LocaleReservationCoreTests.run()
+        LearnedCorrectionsCoreTests.run()
+        LLMCooldownManagerTests.run()
+        TimedTranscriptCoreTests.run()
+        ToastCountdownCoreTests.run()
+        TranscriptionEngineTests.run()
+        TranscriptionErrorPresentationCoreTests.run()
+        TranscriptionRequestCoreTests.run()
+        TranscriptionTimeoutCoreTests.run()
+        TranscriptTextCoreTests.run()
+        UsageStatisticsCoreTests.run()
+        print("ZFlowTests passed")
+    }
+}

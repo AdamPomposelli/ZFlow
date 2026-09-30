@@ -1,0 +1,13 @@
+<!--
+  ZFlow mark.
+
+  Same construction as the Zippytal mark it belongs to: two anchored squares
+  in near-black, a purple stroke running between them. Only the stroke
+  differs — Zippytal's Z is drawn straight, ZFlow's bends, because the product
+  is speech turning into text and the line should move.
+-->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ZFlow">
+  <path d="M12 8H26C22 14 10 18 6 24H20" stroke="#6D28D9" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="4" y="4" width="8" height="8" rx="2" fill="#171717"/>
+  <rect x="20" y="20" width="8" height="8" rx="2" fill="#171717"/>
+</svg>

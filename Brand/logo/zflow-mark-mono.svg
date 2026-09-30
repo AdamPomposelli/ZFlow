@@ -1,0 +1,6 @@
+<!-- One colour, for a menu bar, a stamp, or anywhere the purple cannot go. -->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ZFlow">
+  <path d="M12 8H26C22 14 10 18 6 24H20" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="4" y="4" width="8" height="8" rx="2" fill="currentColor"/>
+  <rect x="20" y="20" width="8" height="8" rx="2" fill="currentColor"/>
+</svg>
