@@ -61,6 +61,10 @@ RESOURCES = $(CONTENTS)/Resources
 UI_DIR = electron
 UI_APP = $(UI_DIR)/release/ZFlow UI.app
 ARCH ?= $(shell uname -m)
+VERSION := $(shell plutil -extract CFBundleShortVersionString raw Info.plist)
+# ZFlow-0.3.0-arm64.dmg: the name says what and for which Macs.
+DMG = $(BUILD_DIR)/$(subst $(space),-,$(APP_NAME))-$(VERSION)-$(ARCH).dmg
+RELEASE_IDENTITY ?= -
 
 # Pick the icon source based on which bundle we are building. Dev builds get
 # a distinct hammer-on-waveform icon so a developer's dock shows at a glance
@@ -73,7 +77,7 @@ ICON_SOURCE = Resources/AppIcon-Source.png
 ICON_ICNS = Resources/AppIcon.icns
 endif
 
-.PHONY: all check clean run icon dmg codesign-dmg notarize test typecheck validate ui ui-test
+.PHONY: all check clean run icon dmg release codesign-dmg notarize test typecheck validate ui ui-test
 
 all: $(APP_EXECUTABLE_TARGET)
 
@@ -184,38 +188,35 @@ $(ICON_ICNS): $(ICON_SOURCE)
 	@rm -rf $(BUILD_DIR)/AppIcon.iconset
 	@echo "Generated $@"
 
+# The installer image for whichever app this builds: the dev one by default,
+# the release one through `make release`. See scripts/make-dmg.sh.
 dmg: all
-	@rm -f "$(BUILD_DIR)/$(APP_NAME).dmg"
-	@rm -rf $(BUILD_DIR)/dmg-staging
-	@mkdir -p $(BUILD_DIR)/dmg-staging
-	@cp -R "$(APP_BUNDLE)" $(BUILD_DIR)/dmg-staging/
-	@osascript -e 'tell application "Finder" to make alias file to POSIX file "/Applications" at POSIX file "'"$$(cd $(BUILD_DIR)/dmg-staging && pwd)"'"'
-	@ALIAS=$$(find $(BUILD_DIR)/dmg-staging -maxdepth 1 -not -name '*.app' -not -name '.DS_Store' -type f | head -1) && mv "$$ALIAS" "$(BUILD_DIR)/dmg-staging/Applications"
-	@fileicon set "$(BUILD_DIR)/dmg-staging/Applications" /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/ApplicationsFolderIcon.icns
-	@echo "Creating DMG..."
-	@create-dmg \
-		--volname "$(APP_NAME)" \
-		--volicon "$(ICON_ICNS)" \
-		--background "Resources/dmg-background.tiff" \
-		--window-pos 200 120 \
-		--window-size 660 400 \
-		--icon-size 128 \
-		--icon "$(APP_NAME).app" 180 170 \
-		--hide-extension "$(APP_NAME).app" \
-		--icon "Applications" 480 170 \
-		--no-internet-enable \
-		"$(BUILD_DIR)/$(APP_NAME).dmg" \
-		"$(BUILD_DIR)/dmg-staging"
-	@rm -rf $(BUILD_DIR)/dmg-staging
-	@echo "Created $(BUILD_DIR)/$(APP_NAME).dmg"
+	@scripts/make-dmg.sh "$(APP_BUNDLE)" "$(DMG)" "$(APP_NAME)" "$(ICON_ICNS)"
+
+# What goes on a GitHub release: the app under its release name and
+# identifier, with the settings window freshly built inside, and its disk
+# image. Rebuilt from scratch, because the app only copies the settings window
+# when it is built and would otherwise ship a stale one.
+#
+# The image is called ZFlow.dmg whatever the version: GitHub's link to the
+# latest release's file, which the README's download button uses, only
+# survives a new release if the file name does not change.
+#
+# Signed ad hoc unless RELEASE_IDENTITY names a Developer ID. Without one,
+# macOS asks people to approve the app once in Privacy & Security.
+release:
+	@$(MAKE) ui
+	@rm -rf "$(BUILD_DIR)/ZFlow.app"
+	@$(MAKE) dmg APP_NAME=ZFlow BUNDLE_ID=com.zippy.zflow CODESIGN_IDENTITY="$(RELEASE_IDENTITY)" \
+		DMG="$(BUILD_DIR)/ZFlow.dmg"
 
 codesign-dmg: dmg
-	codesign --force --sign "$(CODESIGN_IDENTITY)" "$(BUILD_DIR)/$(APP_NAME).dmg"
+	codesign --force --sign "$(CODESIGN_IDENTITY)" "$(DMG)"
 
 notarize:
-	xcrun notarytool submit "$(BUILD_DIR)/$(APP_NAME).dmg" \
+	xcrun notarytool submit "$(DMG)" \
 		--keychain-profile "$(NOTARIZE_PROFILE)" --wait
-	xcrun stapler staple "$(BUILD_DIR)/$(APP_NAME).dmg"
+	xcrun stapler staple "$(DMG)"
 
 clean:
 	rm -rf $(BUILD_DIR)
