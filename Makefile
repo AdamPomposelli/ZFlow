@@ -19,6 +19,7 @@ TEST_PRODUCTION_SOURCES = \
 	Sources/AudioUploadEncoder.swift \
 	Sources/AudioSegmentationCore.swift \
 	Sources/CleanupPromptCore.swift \
+	Sources/ClipboardRestoreCore.swift \
 	Sources/CorrectionAdjudicator.swift \
 	Sources/EditSettleTracker.swift \
 	Sources/DockVisibility.swift \
@@ -33,6 +34,7 @@ TEST_PRODUCTION_SOURCES = \
 	Sources/MeetingSummaryCore.swift \
 	Sources/ModelConfiguration.swift \
 	Sources/NotetakerCore.swift \
+	Sources/PasteTargetCore.swift \
 	Sources/PermissionsCore.swift \
 	Sources/PipelineMode.swift \
 	Sources/TimedTranscriptCore.swift \

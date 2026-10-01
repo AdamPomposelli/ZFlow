@@ -261,6 +261,9 @@ final class AppState: ObservableObject, @unchecked Sendable {
     private let pasteAfterShortcutReleaseDelay: TimeInterval = 0.03
     private let pressEnterAfterPasteDelay: TimeInterval = 0.08
     private let clipboardRestoreDelay: TimeInterval = 1.0
+    /// The clipboard's change count right after Copy in the not-pasted toast.
+    /// That copy is deliberate and must outlive the pending restore.
+    private var deliberateCopyChangeCount: Int?
     let maxPipelineHistoryCount = 20
     static let defaultContextScreenshotMaxDimension = Int(AppContextService.defaultScreenshotMaxDimension)
     static let contextScreenshotDimensionOptions = [1024, 768, 640, 512]
@@ -1519,7 +1522,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
                             lastTranscript = trimmedRetryTranscript
                             if presentsLiveFeedback {
                                 let pendingRestore = writeTranscriptToPasteboard(trimmedRetryTranscript)
-                                pasteAtCursorWhenShortcutReleased {
+                                pasteAtCursorWhenShortcutReleased(transcript: trimmedRetryTranscript) {
                                     self.restoreClipboardIfNeeded(pendingRestore)
                                 }
                             } else {
@@ -3104,7 +3107,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
     func copyLastTranscriptToPasteboard() {
         guard !lastTranscript.isEmpty else { return }
         let pendingClipboardRestore = writeTranscriptToPasteboard(lastTranscript)
-        pasteAtCursorWhenShortcutReleased { [weak self] in
+        pasteAtCursorWhenShortcutReleased(transcript: lastTranscript) { [weak self] in
             self?.restoreClipboardIfNeeded(pendingClipboardRestore)
         }
     }
@@ -4206,7 +4209,7 @@ To stop this recurring, sign development builds with a stable self-signed certif
                             // text, which is how new dictionary words are
                             // learned.
                             self.beginWatchingForCorrections(of: trimmedFinalTranscript)
-                            self.pasteAtCursorWhenShortcutReleased {
+                            self.pasteAtCursorWhenShortcutReleased(transcript: trimmedFinalTranscript) {
                                 if shouldPressEnterAfterPaste {
                                     self.pressEnterAfterPaste {
                                         self.restoreClipboardIfNeeded(pendingClipboardRestore)
@@ -4855,10 +4858,13 @@ To stop this recurring, sign development builds with a stable self-signed certif
             // stranded on the clipboard. Restore when nothing changed, or when the
             // clipboard still holds exactly the transcript we wrote (so the user
             // has not deliberately copied something new that we would clobber).
-            let clipboardStillHoldsTranscript =
-                pasteboard.string(forType: .string) == pendingRestore.writtenTranscript
-            guard pasteboard.changeCount == pendingRestore.expectedChangeCount
-                || clipboardStillHoldsTranscript else { return }
+            guard ClipboardRestoreCore.shouldRestore(
+                changeCount: pasteboard.changeCount,
+                expectedChangeCount: pendingRestore.expectedChangeCount,
+                currentText: pasteboard.string(forType: .string),
+                writtenTranscript: pendingRestore.writtenTranscript,
+                deliberateCopyChangeCount: self.deliberateCopyChangeCount
+            ) else { return }
             pendingRestore.snapshot.restore(to: pasteboard)
         }
     }
@@ -4877,11 +4883,43 @@ To stop this recurring, sign development builds with a stable self-signed certif
         }
     }
 
-    private func pasteAtCursorWhenShortcutReleased(completion: (() -> Void)? = nil) {
+    /// `transcript`, when given, is offered back in a toast if the paste had
+    /// nowhere to land.
+    private func pasteAtCursorWhenShortcutReleased(
+        transcript: String? = nil,
+        completion: (() -> Void)? = nil
+    ) {
         performAfterShortcutReleased { [weak self] in
             self?.pasteAtCursor()
+            if let transcript { self?.offerTranscriptIfPasteWentNowhere(transcript) }
             completion?()
         }
+    }
+
+    /// Someone working fast moves the focus before the dictation lands, and
+    /// the paste falls on a page, a file list, or nothing at all. The text
+    /// is not lost — it is in History — but fetching it from there each time
+    /// is slow. So when nothing that takes text had the focus, the text is
+    /// shown with a Copy button. See `PasteTargetCore` for why only a clear
+    /// "nowhere" counts.
+    private func offerTranscriptIfPasteWentNowhere(_ transcript: String) {
+        PasteTargetProbe.check { [weak self] verdict in
+            guard let self, verdict == .nowhere else { return }
+            os_log(.default, log: recordingLog, "paste had no text target; offering the transcript to copy")
+            // A failure indicator may have its own dismissal scheduled; it
+            // must not take this toast with it.
+            self.clearPendingOverlayDismissToken()
+            self.overlayManager.showUnpasted(transcript: transcript) { [weak self] in
+                self?.copyUnpastedTranscript(transcript)
+            }
+        }
+    }
+
+    private func copyUnpastedTranscript(_ transcript: String) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(transcript, forType: .string)
+        deliberateCopyChangeCount = pasteboard.changeCount
     }
 
     private func pressEnterWhenShortcutReleased(completion: (() -> Void)? = nil) {
