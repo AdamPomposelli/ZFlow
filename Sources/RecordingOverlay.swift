@@ -19,16 +19,22 @@ final class RecordingOverlayState: ObservableObject {
     /// rather than always reading as a failure.
     @Published var toastKind: ToastKind = .error
     @Published var toastActionTitle: String = "Retry"
+    /// What could not be pasted, cut to what fits on screen. The Copy button
+    /// copies the whole text, not this.
+    @Published var unpastedPreview: String?
 }
 
 enum ToastKind {
     case error
     case info
+    /// A dictation that had nowhere to land, offered back for copying.
+    case unpasted
 
     var systemImage: String {
         switch self {
         case .error: return "exclamationmark.circle.fill"
         case .info: return "text.book.closed.fill"
+        case .unpasted: return "doc.on.clipboard.fill"
         }
     }
 
@@ -36,6 +42,7 @@ enum ToastKind {
         switch self {
         case .error: return Color.red.opacity(0.92)
         case .info: return Color.accentColor
+        case .unpasted: return Color.orange.opacity(0.95)
         }
     }
 }
@@ -251,6 +258,33 @@ final class RecordingOverlayManager {
         showToast(message, kind: .info, actionTitle: actionTitle, action: action)
     }
 
+    /// How long a dictation that went nowhere stays on offer. Longer than a
+    /// retry: the point is to give someone working fast the time to put the
+    /// cursor back where it belongs. Hovering still pauses it.
+    static let unpastedToastDuration: TimeInterval = 15
+    static let unpastedToastWidth: CGFloat = 440
+
+    /// The dictation was transcribed but had nowhere to land: no text field
+    /// had the focus. Shows what was said, with a button that copies it, so
+    /// it is not lost and does not need fetching from History.
+    func showUnpasted(transcript: String, onCopy: @escaping () -> Void) {
+        let preview = PasteTargetCore.preview(of: transcript)
+        DispatchQueue.main.async {
+            self.overlayState.errorMessage = "Not pasted — nothing was ready to type into"
+            self.overlayState.unpastedPreview = preview
+            self.overlayState.toastID = UUID()
+            // Not wrapped to dismiss like Retry: the toast confirms the copy
+            // before it closes.
+            self.overlayState.errorRetryAction = onCopy
+            self.overlayState.errorToastDuration = Self.unpastedToastDuration
+            self.overlayState.toastKind = .unpasted
+            self.overlayState.toastActionTitle = "Copy"
+            self.lockedOverlayWidth = nil
+            self.overlayState.phase = .feedback
+            self.showOverlayPanel(animatedResize: true)
+        }
+    }
+
     func showError(_ message: String, retry: (() -> Void)? = nil) {
         showToast(message, kind: .error, actionTitle: "Retry", action: retry)
     }
@@ -269,6 +303,7 @@ final class RecordingOverlayManager {
         }()
         DispatchQueue.main.async {
             let toastID = UUID()
+            self.overlayState.unpastedPreview = nil
             self.overlayState.errorMessage = truncated
             self.overlayState.toastID = toastID
             self.overlayState.errorRetryAction = retry.map { action in
@@ -477,13 +512,34 @@ final class RecordingOverlayManager {
         // 38pt drop-down pill remains available when use_compact_overlay
         // is explicitly toggled off. Error toasts also force the drop-down
         // height so messages stay readable even when compact overlay is enabled.
-        let baseHeight: CGFloat = isShowingRetryToast ? 74 : 38
+        let baseHeight: CGFloat = overlayState.unpastedPreview != nil
+            ? unpastedToastHeight
+            : (isShowingRetryToast ? 74 : 38)
         let height: CGFloat = (useCompact && !forceDropDownPill)
             ? notchOverlap
             : baseHeight + (screenHasNotch ? notchOverlap : 0)
         let x = screen.frame.midX - width / 2
         let y = screen.frame.maxY - height
         return NSRect(x: x, y: y, width: width, height: height)
+    }
+
+    /// Measured rather than guessed: the preview is anything from a word to
+    /// a dozen lines, and the panel is sized by AppKit before SwiftUI lays it
+    /// out.
+    private var unpastedToastHeight: CGFloat {
+        guard let preview = overlayState.unpastedPreview else { return 74 }
+        let font = NSFont.systemFont(ofSize: ErrorRetryToastView.previewFontSize)
+        let textWidth = Self.unpastedToastWidth - 24 - 2 * ErrorRetryToastView.previewPadding
+        let measured = (preview as NSString).boundingRect(
+            with: NSSize(width: textWidth, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: [.font: font]
+        ).height
+        let lineHeight = ceil(font.ascender - font.descender + font.leading)
+        let textHeight = min(ceil(measured), lineHeight * CGFloat(PasteTargetCore.previewLines))
+        // Header, gaps, the preview's own padding, the countdown and a little
+        // slack for SwiftUI's line spacing.
+        return 40 + 2 * ErrorRetryToastView.previewPadding + textHeight + 20 + 6
     }
 
     private var overlayWidth: CGFloat {
@@ -501,6 +557,9 @@ final class RecordingOverlayManager {
             let feedbackWidth: CGFloat = {
                 guard let msg = overlayState.errorMessage, !msg.isEmpty else {
                     return 92
+                }
+                if overlayState.unpastedPreview != nil {
+                    return Self.unpastedToastWidth
                 }
                 guard !isShowingRetryToast else {
                     // Two lines of text plus the button: half the characters
@@ -546,6 +605,7 @@ final class RecordingOverlayManager {
 
     private func dismissAll() {
         lockedOverlayWidth = nil
+        overlayState.unpastedPreview = nil
         overlayState.isCommandMode = false
         overlayState.updateVersion = ""
         overlayState.errorRetryAction = nil
@@ -1053,6 +1113,7 @@ struct RecordingOverlayView: View {
                     duration: state.errorToastDuration,
                     kind: state.toastKind,
                     actionTitle: state.toastActionTitle,
+                    preview: state.unpastedPreview,
                     onRetry: retry,
                     onExpire: onToastExpired
                 )
@@ -1149,12 +1210,18 @@ struct ErrorRetryToastView: View {
     let duration: TimeInterval
     let kind: ToastKind
     let actionTitle: String
+    let preview: String?
     let onRetry: () -> Void
     let onExpire: () -> Void
 
     @State private var countdown: ToastCountdown
     @State private var isHovering = false
     @State private var hasExpired = false
+    /// The text has been copied; the button says so before the toast closes.
+    @State private var didCopy = false
+
+    static let previewFontSize: CGFloat = 11.5
+    static let previewPadding: CGFloat = 10
 
     private static let tickInterval: TimeInterval = 1.0 / 30.0
     private let ticker = Timer.publish(
@@ -1169,6 +1236,7 @@ struct ErrorRetryToastView: View {
         duration: TimeInterval,
         kind: ToastKind = .error,
         actionTitle: String = "Retry",
+        preview: String? = nil,
         onRetry: @escaping () -> Void,
         onExpire: @escaping () -> Void
     ) {
@@ -1176,6 +1244,7 @@ struct ErrorRetryToastView: View {
         self.duration = duration
         self.kind = kind
         self.actionTitle = actionTitle
+        self.preview = preview
         self.onRetry = onRetry
         self.onExpire = onExpire
         _countdown = State(initialValue: ToastCountdown(duration: duration))
@@ -1192,16 +1261,16 @@ struct ErrorRetryToastView: View {
                 Text(message)
                     .font(.system(size: 11.5, weight: .medium))
                     .foregroundStyle(.white)
-                    .lineLimit(2)
+                    .lineLimit(preview == nil ? 2 : 1)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                Button(action: onRetry) {
+                Button(action: act) {
                     HStack(spacing: 4) {
-                        Image(systemName: kind == .error ? "arrow.clockwise" : "arrow.uturn.backward")
+                        Image(systemName: actionSymbol)
                             .font(.system(size: 10, weight: .bold))
-                        Text(actionTitle)
+                        Text(didCopy ? "Copied" : actionTitle)
                             .font(.system(size: 11, weight: .semibold))
                     }
                     .foregroundStyle(.white)
@@ -1217,6 +1286,26 @@ struct ErrorRetryToastView: View {
             }
             .padding(.horizontal, 12)
             .padding(.top, 10)
+
+            if let preview {
+                // The words themselves, so the right dictation is recognised
+                // at a glance. Cut with an ellipsis; Copy takes all of it.
+                Text(preview)
+                    .font(.system(size: Self.previewFontSize))
+                    .foregroundStyle(.white.opacity(0.88))
+                    .lineLimit(PasteTargetCore.previewLines)
+                    .truncationMode(.tail)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    .padding(Self.previewPadding)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.white.opacity(0.07))
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+                    .accessibilityLabel("Dictated text")
+            }
 
             Spacer(minLength: 6)
 
@@ -1248,12 +1337,39 @@ struct ErrorRetryToastView: View {
             }
         }
         .onReceive(ticker) { _ in
-            guard !hasExpired else { return }
+            guard !hasExpired, !didCopy else { return }
             countdown.advance(by: Self.tickInterval)
             if countdown.isExpired {
                 hasExpired = true
                 onExpire()
             }
+        }
+    }
+}
+
+extension ErrorRetryToastView {
+    fileprivate var actionSymbol: String {
+        switch kind {
+        case .error: return "arrow.clockwise"
+        case .info: return "arrow.uturn.backward"
+        case .unpasted: return didCopy ? "checkmark" : "doc.on.doc"
+        }
+    }
+
+    /// Retry and Undo hand over at once. Copy stays a moment to say it
+    /// worked — copying is silent otherwise — then closes.
+    fileprivate func act() {
+        guard kind == .unpasted else {
+            onRetry()
+            return
+        }
+        guard !didCopy else { return }
+        onRetry()
+        didCopy = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            guard !hasExpired else { return }
+            hasExpired = true
+            onExpire()
         }
     }
 }
