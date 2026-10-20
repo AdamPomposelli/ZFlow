@@ -1,11 +1,14 @@
 <p align="center">
-  <img src="Brand/logo/zflow-appicon.svg" width="128" alt="ZFlow">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="Brand/readme/hero-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="Brand/readme/hero-light.svg">
+    <img alt="Zippy ZFlow" src="Brand/readme/hero-light.svg" width="460">
+  </picture>
 </p>
 
-<h1 align="center">ZFlow</h1>
+<h3 align="center">Hold a key. Speak. It's typed.</h3>
 
 <p align="center">
-  <b>Hold a key. Speak. It's typed.</b><br>
   Wispr Flow–style dictation for your Mac. Free, private, instant.
 </p>
 
@@ -13,8 +16,12 @@
   <a href="https://github.com/AdamPomposelli/ZFlow/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/AdamPomposelli/ZFlow?style=flat-square&color=6D28D9&label=release"></a>
   <img alt="macOS on Apple silicon" src="https://img.shields.io/badge/macOS-Apple%20silicon-3F3F46?style=flat-square&logo=apple&logoColor=white">
   <img alt="100% free" src="https://img.shields.io/badge/price-100%25%20free-16A34A?style=flat-square">
-  <img alt="Runs on your Mac" src="https://img.shields.io/badge/privacy-on--device-6D28D9?style=flat-square">
   <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-3F3F46?style=flat-square"></a>
+  <br>
+  <a href="https://TODO-zippy-website"><img alt="Website" src="https://img.shields.io/badge/website-zippy-6D28D9?style=flat-square&logo=safari&logoColor=white"></a>
+  <a href="https://TODO-zsquad"><img alt="Join the ZSquad" src="https://img.shields.io/badge/ZSquad-join%20us-6D28D9?style=flat-square&logo=discord&logoColor=white"></a>
+  <a href="https://TODO-x"><img alt="Follow Zippy on X" src="https://img.shields.io/badge/follow-@zippy-000000?style=flat-square&logo=x&logoColor=white"></a>
+  <a href="https://github.com/AdamPomposelli/ZFlow/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/AdamPomposelli/ZFlow?style=flat-square&color=EAB308&logo=github"></a>
 </p>
 
 <p align="center">
@@ -23,16 +30,27 @@
   </a>
   <br>
   <sub>No account · No subscription · <a href="#quick-start">Ready in 2 minutes</a></sub>
+  <br>
+  <sub>Built with ❤︎ by the <a href="https://TODO-zippy-website">Zippy</a> team</sub>
 </p>
 
-<!-- 🎬 Teaser video goes here. -->
+<p align="center">
+  <a href="#quick-start">Quick start</a> |
+  <a href="#everything-it-does">Features</a> |
+  <a href="#privacy">Privacy</a> |
+  <a href="#make-it-yours">Make it yours</a> |
+  <a href="#contributing">Contributing</a> |
+  <a href="https://TODO-zsquad">ZSquad</a>
+</p>
 
----
+<!-- Made with HyperFrames; source and re-render steps in Brand/demo/. -->
+<p align="center">
+  <img src="Brand/readme/demo.webp" alt="ZFlow in use: hold fn, speak, and clean text lands where the cursor is" width="800">
+</p>
 
 ## 💜 Why ZFlow
 
-Dictation apps usually make you pick two of three: **free**, **private**, **good**.
-ZFlow is all three.
+Free, private, and good. You shouldn't have to pick.
 
 <table>
   <tr>
@@ -49,17 +67,8 @@ ZFlow is all three.
   </tr>
 </table>
 
-|  | **ZFlow** | Subscription dictation apps |
-|---|:---:|:---:|
-| 💸 Price | **Free** | Monthly fee |
-| 📏 Word limit | **None** | Often capped on free plans |
-| 👤 Account | **Not needed** | Required |
-| 🎙️ Where your voice goes | **Your Mac**, or the provider *you* pick | Their servers |
-| 🧩 Speech engine | **Apple on-device, Groq, OpenAI, ZenMux, any OpenAI-compatible API** | Theirs |
-| 📖 Source code | **Open, MIT** | Closed |
-
 > [!NOTE]
-> **Built by people who dictate all day.** ZFlow is made by the team at Zippy, and we use it every day for everything we write. If something gets in the way, we feel it first.
+> **Built by people who dictate all day.** We use ZFlow for everything we write. If something gets in the way, we feel it first.
 
 <a id="quick-start"></a>
 
@@ -91,32 +100,34 @@ One click in *Post-Processing* switches between them. Mix and match the settings
 | 🎯 | **Normal** | ~1 s | Cleaned up: punctuation, filler words, your vocabulary, tuned to the app you're in. |
 | 💎 | **Quality** | ~3 s | Everything in Normal, plus a look at the window you're typing into for perfect context. |
 
+<a id="everything-it-does"></a>
+
 ## ✨ Everything it does
 
 <table>
   <tr>
-    <td width="50%" valign="top">⚡ <b>Dictate anywhere</b><br>Hold <kbd>fn</kbd> in any app, speak, let go. The text lands where your cursor is.</td>
-    <td width="50%" valign="top">🧩 <b>Any provider, per stage</b><br>Apple on-device, Groq, OpenAI, ZenMux, or any OpenAI-compatible API. Run cleanup on Ollama or LM Studio if you like.</td>
+    <td width="50%" valign="top">⚡ <b>Talk instead of type</b><br>Hold <kbd>fn</kbd> in any app, speak, let go. The words land where your cursor is.</td>
+    <td width="50%" valign="top">🧠 <b>It learns your words</b><br>Correct a word right after dictating and ZFlow offers to remember it for next time.</td>
   </tr>
   <tr>
-    <td valign="top">🧠 <b>Learns your words</b><br>Fix a word by hand right after dictating and ZFlow can add it to your Dictionary for next time.</td>
-    <td valign="top">✏️ <b>Edit Mode</b><br>Select some text and say what to do with it: <i>"make it shorter"</i>, <i>"translate to Spanish"</i>.</td>
+    <td valign="top">✏️ <b>Rewrite with your voice</b><br>Select some text and say what you want: <i>"make it shorter"</i>, <i>"translate to Spanish"</i>.</td>
+    <td valign="top">🗒️ <b>Your meetings, written up</b><br>It records the call, tells the speakers apart and writes the summary, on your Mac.</td>
   </tr>
   <tr>
-    <td valign="top">🗒️ <b>Notetaker</b><br>Records your calls, tells the speakers apart and writes the summary, on your Mac.</td>
-    <td valign="top">📂 <b>Transcribe a file</b><br>Drop in an audio file, get the transcript back.</td>
+    <td valign="top">🌍 <b>Speaks your language</b><br>10+ languages on-device, 29 with a cloud provider, translated as you go if you like.</td>
+    <td valign="top">↩️ <b>Hands off the keyboard</b><br>End with <i>"press enter"</i> and your message is sent.</td>
   </tr>
   <tr>
-    <td valign="top">🌍 <b>Your language</b><br>10+ languages on-device, 29 with a cloud provider, and the output can be translated as you go.</td>
-    <td valign="top">↩️ <b>Say "press enter"</b><br>End a dictation with it and ZFlow sends the message for you.</td>
+    <td valign="top">📋 <b>Never lose a word</b><br>Clicked away before the text landed? It's waiting for you, one click from your clipboard.</td>
+    <td valign="top">🧷 <b>Your clipboard, untouched</b><br>Whatever you had copied is still there after every dictation.</td>
   </tr>
   <tr>
-    <td valign="top">📊 <b>Insights</b><br>Words dictated, your streak, and the time and money it saved you.</td>
-    <td valign="top">🕘 <b>History</b><br>Every dictation, with what was heard and what was pasted. Retry or delete any of them.</td>
+    <td valign="top">📊 <b>See the time you got back</b><br>Words dictated, your streak, and the hours you didn't spend typing.</td>
+    <td valign="top">🕘 <b>Every dictation, kept</b><br>What was heard and what was typed. Retry or delete any of them.</td>
   </tr>
   <tr>
-    <td valign="top">📋 <b>Never lose a word</b><br>Focus moved before the text landed? ZFlow shows it to you with a <b>Copy</b> button.</td>
-    <td valign="top">🧷 <b>Your clipboard, untouched</b><br>Whatever you had copied is put back after every paste.</td>
+    <td valign="top">📂 <b>Drop in a recording</b><br>Any audio file in, a transcript out.</td>
+    <td valign="top">🧩 <b>Bring your own engine</b><br>Apple on-device, Groq, OpenAI, ZenMux, any OpenAI-compatible API, or a model on your own machine.</td>
   </tr>
 </table>
 
@@ -130,6 +141,8 @@ One click in *Post-Processing* switches between them. Mix and match the settings
 
 Every shortcut can be changed in *System*.
 
+<a id="privacy"></a>
+
 ## 🔒 Privacy
 
 - 🏠 **On this Mac:** audio, transcripts and meeting summaries never leave your Mac.
@@ -137,6 +150,8 @@ Every shortcut can be changed in *System*.
 - 🚫 **No account, no telemetry, no analytics.** There is no ZFlow server.
 - 📸 **Screen context is off** until you turn it on, and Screen Recording is only requested then.
 - 🗂️ **Your data stays put** in `~/Library/Application Support/ZFlow`. Delete any dictation from *History*.
+
+<a id="make-it-yours"></a>
 
 ## 🛠️ Make it yours
 
@@ -198,8 +213,46 @@ make release    # the release app and ZFlow.dmg, in build/
 
 </details>
 
+<a id="contributing"></a>
+
+## 🤝 Contributing
+
+ZFlow gets better every time someone tells us what got in their way. No contribution is too small.
+
+- 🐛 **Something broke?** [Open an issue](https://github.com/AdamPomposelli/ZFlow/issues/new) and tell us what you expected.
+- 💡 **Got an idea?** Pitch it in an [issue](https://github.com/AdamPomposelli/ZFlow/issues) or on the [ZSquad](https://TODO-zsquad).
+- 🌱 **First pull request?** Start with a [good first issue](https://github.com/AdamPomposelli/ZFlow/labels/good%20first%20issue).
+- 🛠️ **Ready to code?** Fork, branch, run `make check`, and open a pull request. [`AGENTS.md`](AGENTS.md) has the house rules.
+
+## ⭐ Like it? Star it
+
+A star takes one second and helps the next person find ZFlow.
+
+<p align="center">
+  <a href="https://star-history.com/#AdamPomposelli/ZFlow&Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=AdamPomposelli/ZFlow&type=Date&theme=dark">
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=AdamPomposelli/ZFlow&type=Date">
+      <img alt="ZFlow star history" src="https://api.star-history.com/svg?repos=AdamPomposelli/ZFlow&type=Date" width="640">
+    </picture>
+  </a>
+</p>
+
+<!--
+  Contributors: uncomment once people outside the Zippy team have contributed.
+  A wall of one face says "nobody uses this"; a wall of many says the opposite.
+
+## 💜 Made by
+
+ZFlow exists thanks to everyone who [contributed](#contributing).
+
+<p align="center">
+  <a href="https://github.com/AdamPomposelli/ZFlow/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=AdamPomposelli/ZFlow" alt="Contributors">
+  </a>
+</p>
+-->
+
 ## 📄 Licence
 
-MIT. Take it, change it, ship it. See [LICENSE](LICENSE) and [THIRD-PARTY.md](THIRD-PARTY.md).
-
-<p align="center"><sub>Made with 💜 by <b>Zippy</b>, and dictated with ZFlow.</sub></p>
+**MIT.** Take it, change it, ship it, sell it, do whatever you want with it! See [LICENSE](LICENSE).

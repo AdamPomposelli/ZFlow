@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ZFlow demo</title>
+<script src="assets/gsap.min.js"></script>
+<style>
+@font-face { font-family: "PJS"; font-weight: 500; src: url(assets/fonts/PlusJakartaSans-500.woff2) format("woff2"); }
+@font-face { font-family: "PJS"; font-weight: 700; src: url(assets/fonts/PlusJakartaSans-700.woff2) format("woff2"); }
+@font-face { font-family: "PJS"; font-weight: 800; src: url(assets/fonts/PlusJakartaSans-800.woff2) format("woff2"); }
+@font-face { font-family: "JBM"; font-weight: 400; src: url(assets/fonts/JetBrainsMono-400.woff2) format("woff2"); }
+:root { --ink: #07070B; --paper: #F7F6F3; --violet: #7C3AED; --violet-l: #A78BFA; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--ink); color: #fff; font-family: "PJS", sans-serif; }
+#root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--ink); }
+.layer { position: absolute; inset: 0; }
+.scene { position: absolute; inset: 0; overflow: hidden; }
+.wrap { position: absolute; inset: 0; }
+
+#dots { background-image: radial-gradient(rgba(255,255,255,.13) 1.6px, transparent 1.8px); background-size: 48px 48px; opacity: .5; }
+#glow { background: radial-gradient(ellipse 46% 40% at 50% 46%, rgba(124,58,237,.42), rgba(124,58,237,.10) 55%, transparent 75%); }
+#vignette { background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.75) 100%); pointer-events: none; z-index: 40; }
+#grain { z-index: 41; opacity: .06; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+#flash { z-index: 45; background: #fff; opacity: 0; }
+
+#hud { z-index: 50; mix-blend-mode: difference; font: 400 24px/1 "JBM", monospace; letter-spacing: .18em; color: #fff; text-transform: uppercase; }
+.crop { position: absolute; width: 44px; height: 44px; border: 0 solid rgba(255,255,255,.75); }
+.crop.tl { top: 36px; left: 36px; border-top-width: 2px; border-left-width: 2px; }
+.crop.tr { top: 36px; right: 36px; border-top-width: 2px; border-right-width: 2px; }
+.crop.bl { bottom: 36px; left: 36px; border-bottom-width: 2px; border-left-width: 2px; }
+.crop.br { bottom: 36px; right: 36px; border-bottom-width: 2px; border-right-width: 2px; }
+#hud-chapter { position: absolute; bottom: 52px; right: 104px; }
+#ruler { position: absolute; bottom: 60px; left: 104px; width: 560px; height: 4px; display: flex; gap: 10px; }
+#ruler span { flex: 1; background: rgba(255,255,255,.25); position: relative; overflow: hidden; }
+#ruler span b { position: absolute; inset: 0; background: #fff; transform-origin: 0 50%; transform: scaleX(0); }
+
+/* ── The desktop: one 1920×1080 world the camera moves through ── */
+#camera { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+#desk { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 30% 20%, #2A1B4D, transparent 70%), radial-gradient(ellipse 60% 60% at 85% 90%, #14213D, transparent 70%), #0B0B12; }
+#menubar { position: absolute; left: 0; right: 0; top: 0; height: 40px; background: rgba(20,20,28,.72); display: flex; align-items: center; padding: 0 22px; gap: 30px; font: 600 17px/1 "PJS"; color: #E7E7EE; }
+#menubar .dim { color: #A9A9B6; font-weight: 500; }
+#menubar .right { margin-left: auto; display: flex; gap: 24px; color: #D7D7E0; }
+#zbar { position: absolute; top: 0; left: 50%; width: 560px; margin-left: -280px; height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+#zbar-bg { position: absolute; inset: 0; background: #000; box-shadow: 0 10px 40px rgba(124,58,237,.45); border-radius: 0 0 18px 18px; transform-origin: 50% 0; }
+.wing { position: relative; display: flex; align-items: center; gap: 4px; height: 30px; }
+.wing i { display: block; width: 3.5px; height: 4px; border-radius: 2px; background: var(--violet-l); }
+#rec { width: 9px; height: 9px; border-radius: 50%; background: #FF453A; margin-right: 6px; box-shadow: 0 0 8px rgba(255,69,58,.9); }
+#zbar-done { position: absolute; left: 0; right: 0; top: 0; height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 15px/1 "PJS"; color: #fff; opacity: 0; }
+#zbar-done b { width: 16px; height: 16px; border-radius: 50%; background: var(--violet); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+
+#editor { position: absolute; left: 110px; top: 86px; width: 1700px; height: 930px; border-radius: 16px; overflow: hidden; background: #14151B; box-shadow: 0 40px 120px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.07); display: grid; grid-template-columns: 250px 1fr 640px; grid-template-rows: 44px 1fr; }
+#editor .title { grid-column: 1 / 4; display: flex; align-items: center; gap: 10px; padding: 0 18px; background: #1B1C23; border-bottom: 1px solid #262833; font: 500 16px/1 "PJS"; color: #9A9AA8; }
+#editor .title i { width: 13px; height: 13px; border-radius: 50%; display: block; }
+#editor .title span { margin: 0 auto; }
+#tree { background: #111218; border-right: 1px solid #22242D; padding: 18px 0; font: 400 15px/2.1 "JBM", monospace; color: #8B8C99; }
+#tree div { padding-left: 22px; }
+#tree .on { background: #1F2130; color: #E4E4EE; }
+#code { padding: 22px 26px; font: 400 17px/1.95 "JBM", monospace; color: #C9CAD6; white-space: pre; overflow: hidden; }
+#code .n { color: #4B4D5C; display: inline-block; width: 40px; }
+#code .k { color: #C792EA; } #code .s { color: #A5D6A7; } #code .f { color: #82AAFF; } #code .c { color: #5C6070; }
+#chat { background: #17181F; border-left: 1px solid #22242D; display: flex; flex-direction: column; padding: 22px; gap: 18px; }
+#chat .head { font: 700 18px/1 "PJS"; color: #E9E9F1; display: flex; align-items: center; gap: 10px; }
+#chat .head i { width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, #3B3D4D, #22232C); display: block; }
+.msg { border-radius: 14px; padding: 16px 18px; font: 500 17px/1.5 "PJS"; }
+.msg.me { align-self: flex-end; max-width: 78%; background: #262838; color: #E2E2EC; }
+.msg.ai { background: transparent; color: #B4B5C3; padding-left: 0; }
+#prompt { margin-top: auto; min-height: 196px; border-radius: 18px; background: #1E1F28; border: 2px solid #2D2F3B; padding: 20px 22px 60px; position: relative; font: 500 25px/1.42 "PJS"; color: #F1F1F7; }
+#prompt .ph { color: #6A6B7A; position: absolute; left: 24px; top: 20px; }
+#typed span { display: inline-block; margin-right: .24em; }
+#pcaret { display: inline-block; width: 3px; height: 30px; background: var(--violet-l); vertical-align: -5px; }
+#send { position: absolute; right: 16px; bottom: 14px; width: 40px; height: 40px; border-radius: 12px; background: #34364A; display: flex; align-items: center; justify-content: center; }
+#send::after { content: ""; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 11px solid #fff; }
+
+/* The key and the captions sit in front of the camera, not in the world. */
+#keywrap { position: absolute; left: 50%; bottom: 120px; margin-left: -110px; width: 220px; height: 220px; z-index: 20; }
+#key { width: 220px; height: 220px; border-radius: 46px; position: relative;
+  background: linear-gradient(160deg, #2A2A33, #121217 70%); border: 2px solid rgba(255,255,255,.14);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.16), 0 22px 0 #050507, 0 40px 80px rgba(0,0,0,.75); }
+#key .fn { position: absolute; left: 36px; bottom: 30px; font: 700 76px/1 "PJS"; color: #EDEDF2; }
+#key .globe { position: absolute; right: 34px; top: 34px; width: 42px; height: 42px; border: 4px solid #8C8C99; border-radius: 50%; }
+#key .globe::before { content: ""; position: absolute; inset: 0 11px; border: 4px solid #8C8C99; border-radius: 50%; border-top-width: 0; border-bottom-width: 0; }
+#key .globe::after { content: ""; position: absolute; left: -2px; right: -2px; top: 15px; height: 4px; background: #8C8C99; }
+#scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 460px; z-index: 19; background: linear-gradient(0deg, rgba(7,7,11,.92), rgba(7,7,11,.6) 45%, transparent); }
+#caption { position: absolute; left: 110px; bottom: 120px; z-index: 21; font: 800 120px/1 "PJS"; letter-spacing: -.045em; text-shadow: 0 8px 50px rgba(0,0,0,.8); }
+#caption > span { position: absolute; left: 0; bottom: 0; white-space: nowrap; opacity: 0; }
+#caption .v { color: var(--violet-l); }
+
+/* ── 0 s ── */
+#s2 .wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#zero { font: 800 420px/0.9 "PJS"; letter-spacing: -.06em; display: flex; align-items: baseline; text-shadow: 0 0 80px rgba(124,58,237,.55); }
+#zero small { font-size: 210px; color: var(--violet-l); margin-left: 18px; }
+#zero-sub { margin-top: 28px; font: 400 32px/1 "JBM", monospace; letter-spacing: .22em; text-transform: uppercase; color: #A9A9B8; }
+#pills { margin-top: 74px; display: flex; gap: 22px; }
+.pill { padding: 22px 36px; border-radius: 999px; font: 700 44px/1 "PJS"; letter-spacing: -.01em; background: rgba(255,255,255,.07); border: 2px solid rgba(255,255,255,.14); display: flex; align-items: center; gap: 16px; }
+.pill b { width: 34px; height: 34px; border-radius: 50%; background: var(--violet); display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }
+
+/* ── Lockup ── */
+#s3 .wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#lockup { width: 1060px; height: auto; overflow: visible; }
+#tagline { margin-top: 70px; font: 700 66px/1 "PJS"; letter-spacing: -.02em; display: flex; gap: .3em; }
+#tagline .v { color: var(--violet-l); }
+#subline { margin-top: 34px; font: 400 28px/1 "JBM", monospace; letter-spacing: .2em; color: #9C9CAB; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="zflow-demo" data-start="0" data-duration="16" data-width="1920" data-height="1080">
+
+  <div id="dots" class="layer clip" data-start="0" data-duration="16" data-track-index="0"></div>
+  <div id="glow" class="layer clip" data-start="0" data-duration="16" data-track-index="1"></div>
+
+  <!-- 01 HOLD · 02 LISTEN · 03 TYPED: one desktop, one camera -->
+  <div id="s1" class="scene clip" data-start="0" data-duration="9.3" data-track-index="2">
+    <div class="wrap">
+      <div id="camera">
+        <div id="desk"></div>
+        <div id="menubar"><span>●</span><span>Editor</span><span class="dim">File</span><span class="dim">Edit</span><span class="dim">View</span><span class="dim">Go</span><div class="right"><span>Wi-Fi</span><span>Tue 9:41</span></div></div>
+        <div id="zbar">
+          <div id="zbar-bg"></div>
+          <div class="wing" id="wing-l"><span id="rec"></span>__BARS_L__</div>
+          <div class="wing" id="wing-r">__BARS_R__</div>
+          <div id="zbar-done"><b>✓</b>Typed</div>
+        </div>
+        <div id="editor">
+          <div class="title"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i><span>session.ts — my-app</span></div>
+          <div id="tree"><div>▾ src</div><div>&nbsp;&nbsp;▾ auth</div><div class="on">&nbsp;&nbsp;&nbsp;&nbsp;session.ts</div><div>&nbsp;&nbsp;&nbsp;&nbsp;middleware.ts</div><div>&nbsp;&nbsp;&nbsp;&nbsp;tokens.ts</div><div>&nbsp;&nbsp;▸ routes</div><div>&nbsp;&nbsp;▸ store</div><div>▸ tests</div><div>&nbsp;&nbsp;package.json</div><div>&nbsp;&nbsp;README.md</div></div>
+          <div id="code">__CODE__</div>
+          <div id="chat">
+            <div class="head"><i></i>Agent</div>
+            <div class="msg me">Why do some users get logged out after an hour?</div>
+            <div class="msg ai">The session store drops tokens when they expire instead of refreshing them. The check is in middleware.ts, line 42.</div>
+            <div id="prompt"><span class="ph" id="ph">Ask anything…</span><span id="typed">__TYPED__</span><span id="pcaret"></span><div id="send"></div></div>
+          </div>
+        </div>
+      </div>
+      <div id="scrim"></div>
+      <div id="keywrap"><div id="key"><span class="globe"></span><span class="fn">fn</span></div></div>
+      <div id="caption"><span id="cap1">Hold <span class="v">fn.</span></span><span id="cap2">Speak.</span><span id="cap3">It's <span class="v">typed.</span></span></div>
+    </div>
+  </div>
+
+  <!-- 04 · 0 s -->
+  <div id="s2" class="scene clip" data-start="9.0" data-duration="3.3" data-track-index="3">
+    <div class="wrap">
+      <div id="zero"><span>0</span><small>s</small></div>
+      <div id="zero-sub">from your voice to your prompt</div>
+      <div id="pills">
+        <div class="pill"><b>✓</b>On-device</div>
+        <div class="pill"><b>✓</b>Free</div>
+        <div class="pill"><b>✓</b>No API costs</div>
+        <div class="pill"><b>✓</b>No account</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lockup -->
+  <div id="s3" class="scene clip" data-start="12.3" data-duration="3.7" data-track-index="4">
+    <div class="wrap">
+      __LOCKUP__
+      <div id="tagline"><span>Hold a key.</span><span>Speak.</span><span class="v">It's typed.</span></div>
+      <div id="subline">Free · On-device · Ready in 2 minutes</div>
+    </div>
+  </div>
+
+  <div id="vignette" class="layer clip" data-start="0" data-duration="16" data-track-index="8"></div>
+  <div id="grain" class="layer clip" data-start="0" data-duration="16" data-track-index="9"></div>
+  <div id="flash" class="layer clip" data-start="0" data-duration="16" data-track-index="10"></div>
+
+  <div id="hud" class="layer clip" data-start="0" data-duration="16" data-track-index="12">
+    <span class="crop tl"></span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span>
+    <div id="ruler"><span><b></b></span><span><b></b></span><span><b></b></span><span><b></b></span><span><b></b></span></div>
+    <div id="hud-chapter">01 · Hold</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const END = 16;
+  const W = 1920, H = 1080;
+  const tl = gsap.timeline({ paused: true });
+
+  // Camera: frame a point of the desktop at a given zoom. The world is scaled
+  // from its top-left corner, so (px, py) lands at (sx, sy) on screen.
+  const cam = (px, py, s, sx = W / 2, sy = H / 2) => ({ x: sx - px * s, y: sy - py * s, scale: s });
+  const WIDE = cam(W / 2, H / 2, 1);
+  const BAR = cam(960, 20, 3.0, W / 2, 300);          // the ZFlow bar, close up
+  const PROMPT = cam(1490, 900, 1.85, W / 2, 600);    // the prompt box
+
+  // ── 01 · HOLD ── the everyday scene, then the key goes down.
+  tl.set("#camera", WIDE, 0);
+  tl.from("#camera", { scale: 1.08, y: 30, opacity: 0, filter: "blur(16px)", duration: 0.8, ease: "power3.out" }, 0);
+  tl.fromTo("#keywrap", { y: 340, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "back.out(1.4)" }, 0.6);
+  tl.set("#cap1", { opacity: 1 }, 0.75);
+  tl.from("#cap1", { y: 60, filter: "blur(10px)", duration: 0.45, ease: "expo.out" }, 0.75);
+  tl.to("#key", { y: 18, scaleY: 0.94, boxShadow: "inset 0 2px 0 rgba(255,255,255,.16), 0 4px 0 #050507, 0 20px 50px rgba(0,0,0,.7), 0 0 110px rgba(124,58,237,.9)", duration: 0.14, ease: "power2.out" }, 1.35);
+  tl.to("#key", { scaleY: 1, duration: 0.3, ease: "elastic.out(1, 0.4)" }, 1.5);
+  // The notch opens into the ZFlow bar the moment fn is down.
+  tl.fromTo("#zbar-bg", { scaleX: 0.38 }, { scaleX: 1, duration: 0.45, ease: "back.out(1.4)" }, 1.4);
+  tl.from(".wing", { opacity: 0, duration: 0.25, ease: "power1.out" }, 1.55);
+
+  // ── 02 · LISTEN ── push in on the bar while it hears you.
+  tl.to("#camera", { ...BAR, duration: 1.0, ease: "power3.inOut" }, 1.95);
+  tl.to("#cap1", { y: -50, opacity: 0, filter: "blur(10px)", duration: 0.3, ease: "power2.in" }, 2.3);
+  tl.set("#cap2", { opacity: 1 }, 2.55);
+  tl.from("#cap2", { y: 60, filter: "blur(10px)", duration: 0.45, ease: "expo.out" }, 2.55);
+  tl.to("#camera", { x: BAR.x - 30, duration: 1.4, ease: "none" }, 2.95);
+
+  // Let go: the key rises, the bar says it's done.
+  tl.to("#key", { y: 0, boxShadow: "inset 0 2px 0 rgba(255,255,255,.16), 0 22px 0 #050507, 0 40px 80px rgba(0,0,0,.75), 0 0 0 rgba(124,58,237,0)", duration: 0.25, ease: "back.out(2)" }, 4.35);
+  tl.to(".wing", { opacity: 0, duration: 0.12, ease: "power1.in" }, 4.35);
+  tl.to("#zbar-done", { opacity: 1, duration: 0.15, ease: "power1.out" }, 4.42);
+
+  // ── 03 · TYPED ── pull back out of the bar and dive into the prompt.
+  tl.to("#keywrap", { y: 340, opacity: 0, duration: 0.4, ease: "power2.in" }, 4.6);
+  tl.from("#scrim", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0.6);
+  tl.to("#cap2", { y: -50, opacity: 0, filter: "blur(10px)", duration: 0.3, ease: "power2.in" }, 4.6);
+  tl.to("#camera", { ...PROMPT, duration: 1.15, ease: "power3.inOut" }, 4.65);
+  tl.to("#zbar-done", { opacity: 0, duration: 0.3, ease: "power1.out" }, 5.4);
+  tl.to("#zbar-bg", { scaleX: 0.38, duration: 0.3, ease: "power2.in" }, 5.4);
+  tl.to("#prompt", { borderColor: "#7C3AED", boxShadow: "0 0 0 6px rgba(124,58,237,.18), 0 0 60px rgba(124,58,237,.35)", duration: 0.3, ease: "power2.out" }, 5.55);
+  tl.to("#ph", { opacity: 0, duration: 0.12, ease: "none" }, 5.8);
+  // The text appears all at once, the way a paste does: a shimmer of words.
+  tl.from("#typed span", { opacity: 0, y: 14, filter: "blur(8px)", color: "#A78BFA", duration: 0.32, ease: "expo.out", stagger: 0.022 }, 5.8);
+  tl.set("#cap3", { opacity: 1 }, 6.0);
+  tl.from("#cap3", { y: 60, filter: "blur(10px)", duration: 0.45, ease: "expo.out" }, 6.0);
+  tl.to("#send", { backgroundColor: "#7C3AED", scale: 1.12, duration: 0.25, ease: "back.out(2)" }, 6.7);
+  tl.to("#camera", { x: PROMPT.x + 20, y: PROMPT.y - 10, duration: 2.2, ease: "none" }, 5.8);
+  // Exit: whip up, matched by the 0 s entry below.
+  tl.to("#s1 .wrap", { y: -160, filter: "blur(30px)", duration: 0.33, ease: "power2.in" }, 8.67);
+
+  // ── 04 · 0 s ── the number slams in from far away.
+  tl.fromTo("#s2 .wrap", { y: 160, filter: "blur(30px)" }, { y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" }, 9.0);
+  tl.from("#zero", { scale: 3.2, opacity: 0, duration: 0.55, ease: "expo.out" }, 9.0);
+  tl.from("#zero-sub", { y: 24, opacity: 0, duration: 0.4, ease: "power2.out" }, 9.45);
+  tl.from(".pill", { y: 60, scale: 0.7, opacity: 0, duration: 0.42, ease: "back.out(1.7)", stagger: 0.22 }, 9.8);
+
+  // ── Lockup ──
+  tl.from("#lk-zflow", { y: 70, opacity: 0, duration: 0.6, ease: "expo.out" }, 12.35);
+  tl.from("#lk-zippy", { y: 50, opacity: 0, duration: 0.5, ease: "power3.out" }, 12.5);
+  tl.from("#lk-icon", { y: -900, rotation: -16, opacity: 0, transformOrigin: "50% 100%", duration: 0.5, ease: "power2.in" }, 12.65);
+  tl.to("#lk-icon", { scaleY: 0.8, scaleX: 1.1, transformOrigin: "50% 100%", duration: 0.08, ease: "power2.out" }, 13.15);
+  tl.to("#lk-icon", { scaleY: 1, scaleX: 1, transformOrigin: "50% 100%", duration: 0.5, ease: "elastic.out(1, 0.4)" }, 13.23);
+  tl.from("#tagline span", { y: 40, opacity: 0, duration: 0.45, ease: "expo.out", stagger: 0.16 }, 13.4);
+  tl.from("#subline", { opacity: 0, y: 16, duration: 0.6, ease: "power2.out" }, 14.0);
+
+  // ── Per-frame driver ──
+  const bars = [...document.querySelectorAll(".wing i")];
+  const segs = [...document.querySelectorAll("#ruler b")];
+  const chapter = document.getElementById("hud-chapter");
+  const caret = document.getElementById("pcaret");
+  const dots = document.getElementById("dots");
+  const flash = document.getElementById("flash");
+  const glow = document.getElementById("glow");
+  const LABELS = [[0, "01 · Hold"], [1.95, "02 · Speak"], [4.6, "03 · Typed"], [9.0, "04 · 0 seconds"], [12.3, "ZFlow"]];
+  const SEG = [0, 1.95, 4.6, 9.0, 12.3, 16];
+  const clamp = (v) => Math.max(0, Math.min(1, v));
+  function frame(t) {
+    const live = clamp((t - 1.55) / 0.2) * (1 - clamp((t - 4.3) / 0.1));
+    bars.forEach((b, i) => {
+      const a = Math.abs(Math.sin(t * 9.1 + i * 0.73) * Math.cos(t * 5.3 + i * 1.31));
+      b.style.height = (4 + 22 * a * live) + "px";
+    });
+    let label = LABELS[0][1];
+    for (const [s, l] of LABELS) if (t >= s) label = l;
+    chapter.textContent = label;
+    segs.forEach((b, i) => { b.style.transform = "scaleX(" + clamp((t - SEG[i]) / (SEG[i + 1] - SEG[i])) + ")"; });
+    caret.style.opacity = Math.floor(t * 2.4) % 2 ? 0 : 1;
+    dots.style.backgroundPosition = "0px " + (-t * 22).toFixed(1) + "px";
+    let f = 0;
+    for (const c of [12.3]) { const p = (t - c) / 0.2; if (p >= 0 && p <= 1) f = 0.8 * (1 - p); }
+    flash.style.opacity = f;
+    glow.style.opacity = t < 9 ? 0.35 : 1;
+    glow.style.transform = "scale(" + (1 + 0.04 * Math.sin(t * 1.4)) + ")";
+  }
+  const drv = { t: 0 };
+  tl.fromTo(drv, { t: 0 }, { t: END, duration: END, ease: "none", onUpdate: () => frame(drv.t) }, 0);
+  frame(0);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines["zflow-demo"] = tl;
+})();
+</script>
+</body>
+</html>
