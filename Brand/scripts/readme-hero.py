@@ -35,26 +35,41 @@ for a, b in {'#AE76FC': '#A78BFA', '#8544FA': '#7C3AED', '#6B1EFA': '#5B21B6', '
 defs = re.search(r'<defs>.*</defs>', icon, re.S).group(0)
 body = icon[icon.index('</defs>') + 7: icon.rindex('</svg>')]
 
-SMALL, BIG = 0.2, 0.42
+# The brand's own Z, from the kit's glyph, stands in for the Z of ZFlow and
+# carries the icon's violet, so the name and the tile read as one mark.
+glyph = open(f'{KIT}/apps/zpay/zpay-glyph-white.svg').read()
+gx, gy, gw, gh = map(float, re.search(r'viewBox="([^"]+)"', glyph).group(1).split())
+glyph_d = re.search(r'<path d="([^"]+)"', glyph).group(1)
+
+SMALL, BIG = 0.16, 0.42
 cap_s, cap_b = 745 * SMALL, 745 * BIG
-gap = 0.48 * cap_s                       # Zippy baseline to ZFlow cap top
+gap = 0.38 * cap_s                       # clears Zippy's descenders
+base = cap_s + gap + cap_b               # ZFlow's baseline
 zippy_d, zb = word('Zippy', SMALL, 0, cap_s)
-zflow_d, fb = word('ZFlow', BIG, 0, cap_s + gap + cap_b)
-left = min(zb[0], fb[0]); right = fb[2]
-icon_size = 1.22 * cap_s + gap * 0.62
+gscale = cap_b / gh
+z_w = gw * gscale
+flow_d, fb = word('Flow', BIG, z_w + 0.05 * cap_b, base)
+z_transform = f'translate({-gx * gscale:.2f} {base - cap_b - gy * gscale:.2f}) scale({gscale:.5f})'
+left = min(zb[0], 0.0); right = fb[2]
+icon_size = 1.32 * cap_s + gap * 0.85
 icon_x = right - icon_size
-icon_y = -0.3 * cap_s
+icon_y = -0.32 * cap_s
 top = min(icon_y, 0); bottom = max(fb[3], zb[3])
 pad = 4
 W = right - left + 2 * pad; H = bottom - top + 2 * pad
+# In the glyph's own coordinates: the path carries its transform.
+z_grad = (f'<linearGradient id="zflow-z" x1="{gx:.1f}" y1="{gy:.1f}" x2="{gx + gw:.1f}" y2="{gy + gh:.1f}" gradientUnits="userSpaceOnUse">'
+          '<stop offset="0" stop-color="#C4B5FD"/><stop offset="0.55" stop-color="#8B5CF6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>')
+defs = defs.replace('</defs>', z_grad + '</defs>')
 for theme, ink in (('dark', '#FFFFFF'), ('light', '#0A1024')):
     svg = f'''<!-- README hero, {theme} mode. Built from the Zippy brand kit: the
-     wordmarks are Plus Jakarta Sans 800 outlines, the tile is the kit's app
-     icon in ZFlow's violet. Regenerate rather than hand-edit. -->
+     wordmarks are Plus Jakarta Sans 800 outlines, the Z is the kit's glyph,
+     the tile is the kit's app icon in ZFlow's violet. Regenerate rather than hand-edit. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="{left - pad:.1f} {top - pad:.1f} {W:.1f} {H:.1f}" width="{W:.0f}" height="{H:.0f}" fill="none" role="img" aria-label="Zippy ZFlow">
   {defs}
   <path d="{zippy_d}" fill="{ink}"/>
-  <path d="{zflow_d}" fill="{ink}"/>
+  <path d="{glyph_d}" transform="{z_transform}" fill="url(#zflow-z)"/>
+  <path d="{flow_d}" fill="{ink}"/>
   <g transform="translate({icon_x:.2f} {icon_y:.2f}) scale({icon_size / 1024:.5f})">{body}</g>
 </svg>
 '''

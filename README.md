@@ -2,14 +2,14 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="Brand/readme/hero-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="Brand/readme/hero-light.svg">
-    <img alt="Zippy ZFlow" src="Brand/readme/hero-light.svg" width="460">
+    <img alt="Zippy ZFlow" src="Brand/readme/hero-light.svg" width="250">
   </picture>
 </p>
 
-<h3 align="center">Hold a key. Speak. It's typed.</h3>
+<h3 align="center">Wispr Flow, but free.</h3>
 
 <p align="center">
-  Wispr Flow–style dictation for your Mac. Free, private, instant.
+  Hold a key, speak, and it's typed. Dictation for your Mac: private, instant, unlimited.
 </p>
 
 <p align="center">

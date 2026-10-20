@@ -5,7 +5,7 @@ A silent 16-second film for the README that shows ZFlow the way people use it:
 in a code editor, about to prompt an AI agent. Hold fn, the camera pushes into
 the ZFlow bar while it listens, pulls back and dives into the prompt box where
 the text appears at once, then 0 s, on-device, free, no API costs, and the
-Zippy/ZFlow lockup held to the end. Near-black canvas lit by one violet glow.
+Zippy/ZFlow lockup with "Wispr Flow, but free." held to the end. Near-black canvas lit by one violet glow.
 
 ## Colors
 - `#07070B` canvas (ink)

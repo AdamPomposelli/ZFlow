@@ -96,7 +96,7 @@ html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; backgro
 
 /* ── Lockup ── */
 #s3 .wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-#lockup { width: 1060px; height: auto; overflow: visible; }
+#lockup { width: 1000px; height: auto; overflow: visible; }
 #tagline { margin-top: 70px; font: 700 66px/1 "PJS"; letter-spacing: -.02em; display: flex; gap: .3em; }
 #tagline .v { color: var(--violet-l); }
 #subline { margin-top: 34px; font: 400 28px/1 "JBM", monospace; letter-spacing: .2em; color: #9C9CAB; text-transform: uppercase; }
@@ -156,8 +156,8 @@ html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; backgro
   <div id="s3" class="scene clip" data-start="12.3" data-duration="3.7" data-track-index="4">
     <div class="wrap">
       __LOCKUP__
-      <div id="tagline"><span>Hold a key.</span><span>Speak.</span><span class="v">It's typed.</span></div>
-      <div id="subline">Free · On-device · Ready in 2 minutes</div>
+      <div id="tagline"><span>Wispr Flow,</span><span class="v">but free.</span></div>
+      <div id="subline">On-device · No account · Ready in 2 minutes</div>
     </div>
   </div>
 
