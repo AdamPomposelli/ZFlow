@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="Brand/readme/hero-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="Brand/readme/hero-light.svg">
-    <img alt="Zippy ZFlow" src="Brand/readme/hero-light.svg" width="250">
+    <img alt="Zippy ZFlow" src="Brand/readme/hero-light.svg" height="98">
   </picture>
 </p>
 
